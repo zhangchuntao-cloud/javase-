@@ -133,7 +133,7 @@ public class test1 {
         //利用正则表达式提取数据,[\\u4E00-\\u9FA5]表示中文字符
         List<String> FamilyTempList = ReUtil.findAll("(\\W{4})(，|。)",HttpUtil.get(FamilyName), 1);
         List<String> BoyTempList = ReUtil.findAll("([\\u4E00-\\u9FA5]{2})(、|。)", HttpUtil.get(BoyName), 1);
-        List<String> GirlTempList = ReUtil.findAll("([\\u4E00-\\u9FA5]{2})(、|。)", HttpUtil.get(GirlName), 0);
+        List<String> GirlTempList = ReUtil.findAll("(.. ){4}..", HttpUtil.get(GirlName), 0);
         //3.处理名字集合
         ArrayList<String> FamilyList = new ArrayList<>();
         for (String string : FamilyTempList) {
