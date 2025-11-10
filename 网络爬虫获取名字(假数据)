@@ -1,0 +1,190 @@
+//1.不用hutool包,手动书写爬取代码
+package Test;
+
+import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+public class test {
+    public static void main(String[] args) throws IOException {
+        //1.定义路径
+        String FamilyName = "https://hanyu.baidu.com/shici/detail?pid=0b2f26d4c0ddb3ee693fdb1137ee1b0d";
+        String BoyName = "http://www.haoming8.cn/baobao/10881.html";
+        String GirlName = "http://www.haoming8.cn/baobao/7641.html";
+
+        //2.获取名字集合
+        ArrayList<String> FamilyTempList = getData(WebCrawler(FamilyName), "(\\W{4})(，|。)", 1);
+        ArrayList<String> BoyTempList = getData(WebCrawler(BoyName), "([\\u4E00-\\u9FA5]{2})(、|。)", 1);
+        ArrayList<String> GirlTempList = getData(WebCrawler(GirlName), "(.. ){4}..", 0);//五个名字
+
+        //3.处理名字集合
+        ArrayList<String> FamilyList = new ArrayList<>();
+        for (String string : FamilyTempList) {
+            for (int i = 0; i < string.length(); i++) {
+                char c = string.charAt(i);
+                FamilyList.add(c+"");
+            }
+        }
+        ArrayList<String> BoyList = new ArrayList<>();
+        for (String string : BoyTempList) {
+            if(!BoyList.contains(string)){
+                BoyList.add(string);
+            }
+        }
+        ArrayList<String> GirlList = new ArrayList<>();
+        for (String string : GirlTempList) {
+            String[] arr =  string.split(" ");
+            Collections.addAll(GirlList, arr);
+        }
+
+        //4.拼接  张三-男-23
+        ArrayList<String> list = getInfos(FamilyList, BoyList, GirlList, 40, 60);
+        //5.写到文件中
+        File file = new File("D:\\develop\\idea\\code\\basic-code\\Test\\aaa", "name.txt");
+        file.createNewFile();
+        //字符基本流
+        FileWriter fileWriter = new FileWriter(file);
+        for (String string : list) {
+            fileWriter.write(string+"\n");
+        }
+        fileWriter.close();
+    }
+    public static ArrayList<String> getData(String str, String regex, int index){
+        ArrayList<String> list = new ArrayList<>();
+        Matcher matcher = Pattern.compile(regex).matcher(str);
+        while(matcher.find()){
+            String group = matcher.group(index);
+            list.add(group);
+        }
+        return list;
+    }
+    public static String WebCrawler(String web) throws IOException {
+        //爬取网站中内容
+        //1.StringBuilder拼接内容
+        StringBuilder sb = new StringBuilder();
+        //2.创建URL对象
+        URL url = new URL(web);
+        //3.连接上这个网址
+        //细节:确保网络是畅通的,而且这个网址是可以连接上的
+        URLConnection conn = url.openConnection();
+        //4.获取输入流
+        //我的理解是conn只有getInputStream()方法，没有getReader()方法,所以只能用字节流转换再转换, 而不能直接用字符流
+        InputStreamReader isr = new InputStreamReader(conn.getInputStream());
+        int ch;
+        while((ch = isr.read())!=-1){
+            sb.append((char)ch);
+        }
+        isr.close();
+        return sb.toString();
+    }
+    public static ArrayList<String> getInfos(ArrayList<String> FamilyList, ArrayList<String> BoyList, ArrayList<String> GirlList, int boyCount, int girlCount){
+        HashSet<String> boyhs = new HashSet<>();
+        HashSet<String> girlha = new HashSet<>();
+        //男生
+        while(boyhs.size()<boyCount){
+            Collections.shuffle(FamilyList);
+            Collections.shuffle(BoyList);
+            boyhs.add(FamilyList.get(0)+BoyList.get(0));
+
+        }
+        //女生
+        while(girlha.size()<girlCount){
+            Collections.shuffle(FamilyList);
+            Collections.shuffle(GirlList);
+            girlha.add(FamilyList.get(0)+GirlList.get(0));
+        }
+
+        //
+        ArrayList<String> list = new ArrayList<>();
+        Random random = new Random();
+
+        for (String string : boyhs) {
+            int age = random.nextInt(9)+18;//18-27
+            list.add(string+"-男-"+age);
+        }
+        for (String string : girlha) {
+            int age = random.nextInt(7)+18;//18-25
+            list.add(string+"-女-"+age);
+        }
+        return list;
+
+    }
+}
+//2.利用hutool包简化书写
+package Test;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.ReUtil;
+import cn.hutool.http.HttpUtil;
+
+import java.io.IOException;
+import java.util.*;
+public class test1 {
+    public static void main(String[] args) throws IOException {
+        //1.定义路径
+        String FamilyName = "https://hanyu.baidu.com/shici/detail?pid=0b2f26d4c0ddb3ee693fdb1137ee1b0d";
+        String BoyName = "http://www.haoming8.cn/baobao/10881.html";
+        String GirlName = "http://www.haoming8.cn/baobao/7641.html";
+        //2.获取web中的数据
+        //利用正则表达式提取数据,[\\u4E00-\\u9FA5]表示中文字符
+        List<String> FamilyTempList = ReUtil.findAll("(\\W{4})(，|。)",HttpUtil.get(FamilyName), 1);
+        List<String> BoyTempList = ReUtil.findAll("([\\u4E00-\\u9FA5]{2})(、|。)", HttpUtil.get(BoyName), 1);
+        List<String> GirlTempList = ReUtil.findAll("([\\u4E00-\\u9FA5]{2})(、|。)", HttpUtil.get(GirlName), 0);
+        //3.处理名字集合
+        ArrayList<String> FamilyList = new ArrayList<>();
+        for (String string : FamilyTempList) {
+            for (int i = 0; i < string.length(); i++) {
+                char c = string.charAt(i);
+                FamilyList.add(c+"");
+            }
+        }
+        ArrayList<String> BoyList = new ArrayList<>();
+        for (String string : BoyTempList) {
+            if(!BoyList.contains(string)){
+                BoyList.add(string);
+            }
+        }
+        ArrayList<String> GirlList = new ArrayList<>();
+        for (String string : GirlTempList) {
+            String[] arr =  string.split(" ");
+            Collections.addAll(GirlList, arr);
+        }
+        //4.拼接  张三-男-23
+        ArrayList<String> list = getInfos(FamilyList, BoyList, GirlList, 40, 60);
+        //5.写到文件中     调用FileUtil.writeLines方法
+        FileUtil.writeLines(list,"D:\\develop\\idea\\code\\basic-code\\Test\\aaa\\name.txt", "utf-8");
+    }
+    //根据-familyList-boyList-girlList-boyCount-girlCount  拼接出  张三-男-23
+    public static ArrayList<String> getInfos(ArrayList<String> FamilyList, ArrayList<String> BoyList, ArrayList<String> GirlList, int boyCount, int girlCount){
+        HashSet<String> boyhs = new HashSet<>();
+        HashSet<String> girlha = new HashSet<>();
+        //男生
+        while(boyhs.size()<boyCount){
+            Collections.shuffle(FamilyList);
+            Collections.shuffle(BoyList);
+            boyhs.add(FamilyList.get(0)+BoyList.get(0));
+
+        }
+        //女生
+        while(girlha.size()<girlCount){
+            Collections.shuffle(FamilyList);
+            Collections.shuffle(GirlList);
+            girlha.add(FamilyList.get(0)+GirlList.get(0));
+        }
+        ArrayList<String> list = new ArrayList<>();
+        Random random = new Random();
+        for (String string : boyhs) {
+            int age = random.nextInt(9)+18;//18-27
+            list.add(string+"-男-"+age);
+        }
+        for (String string : girlha) {
+            int age = random.nextInt(7)+18;//18-25
+            list.add(string+"-女-"+age);
+        }
+        return list;
+    }
+}
