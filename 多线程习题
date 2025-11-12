@@ -1,16 +1,13 @@
-//多线程习题
-
 package Test;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.*;
 
 public class test {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         //test1();
         //test2();
         //test3();
@@ -18,7 +15,9 @@ public class test {
         //test5();
         //test6();
         //test6Improved();
-        test7();
+        //test7();
+        //pool1();
+        pool2();
     }
     public static void test1(){
 
@@ -111,6 +110,25 @@ public class test {
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
+    }
+    public static void pool1() throws InterruptedException {
+        //1.获取线程池对象
+        ExecutorService pool1 = Executors.newFixedThreadPool(3);
+        //2.提交任务
+        pool1.submit(new MyRunnable());
+        Thread.sleep(1000);
+        pool1.submit(new MyRunnable());
+        Thread.sleep(1000);
+        pool1.submit(new MyRunnable());
+        Thread.sleep(1000);
+        pool1.submit(new MyRunnable());
+
+        //3.关闭线程池
+        pool1.shutdown();
+    }
+    public static void pool2(){
+        int count = Runtime.getRuntime().availableProcessors();
+        System.out.println("当前计算机的CPU核心数为:"+count);
     }
 }
 
@@ -340,3 +358,12 @@ class MyCallable implements Callable<Integer> {
         return box.size()==0?0:box.stream().max(Integer::compareTo).get();
     }
 }
+class MyRunnablePool implements Runnable{
+    @Override
+    public void run() {
+        for (int i = 0; i < 100; i++) {
+            System.out.println(Thread.currentThread().getName()+" "+i);
+        }
+    }
+}
+
